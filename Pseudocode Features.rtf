@@ -12,32 +12,31 @@ Prey\
 Spawn with randomly assigned trait values: movement speed, hunger/metabolism multiplier, and a hue within one of the species color bands\
 When prey eat food they spawn a child that inherits the parent's trait profile with each trait nudged by a random +/- "mutation" percentage\
 Each species starts as a color band with each subsequent generation carrying a slightly mutated hue that stays within that band, so lineage stays visually traceable over generations\
-Currently implemented species/color bands: Yellow, Blue\
-## Expand prey species/color bands to the full intended palette: Green, Purple, Pink (5 total species bands)\
-## Spawn 2-5 distinct species at simulation start, each assigned to one of the color bands, rather than assigning each individual prey a random band independently\
+Species/color bands: Yellow, Green, Blue, Purple, Pink (5 bands, spaced around the hue wheel away from the red bands reserved for predators)\
+## Spawn 2-5 discrete species at simulation start, each assigned to one of the color bands, rather than assigning each individual prey a random band independently\
 \
 Predators\
 Spawn in a red hue (two red sub-bands used to add some initial hue variety)\
 Can see farther than prey (vision radius multiplier)\
 Move faster than prey by default (speed multiplier), but pay a higher energy cost per move step than prey\
 After landing a kill, enters a rest/digestion period (configurable number of ticks) where it does not move but still drains energy\
+"Lie in wait" / camouflage: a predator with no prey target in vision can spontaneously go camouflaged for a configurable number of ticks \'97 a small flat chance applies to every predator each tick, plus an additional chance scaled by the predator's own heritable "camouflage tendency" trait (0-1, mutates and passes to offspring like any other trait, so lineages can drift toward more or less ambush-prone). While camouflaged, the predator is completely immobile, is invisible to prey's predator-detection (prey will not flee it or route around it), and drains energy at a reduced rate versus actively hunting. A prey that wanders onto the camouflaged predator's tile is still caught \'97 that's the ambush payoff. Shown on-screen as a white border around the predator instead of its normal outline.\
 Once consuming prey, if the predator's energy is at or above a reproduction threshold, and the predator population is still under its population-share cap, and the global population cap isn't exceeded, the predator spawns a child (with a small energy cost charged to the parent for reproducing)\
-Child (predator or prey) will have a slightly mutated hue (kept within the parent's color band) along with mutated inherited traits\
+Child (predator or prey) will have a slightly mutated hue (kept within the parent's color band) along with mutated inherited traits (including camouflage tendency, for predators)\
 Predator population is capped as a percentage of total population (predator + prey) to prevent predators from crowding out prey\
-## "Lie in wait" / camouflage trait: while active, the predator is immobile, is hidden from prey vision (prey will not detect or flee from a camouflaged predator), and drains energy at a reduced rate compared to actively moving/hunting. This is a heritable trait like other mutable traits (offspring may inherit the parent's tendency toward it), but it can also arise spontaneously/randomly independent of inheritance.\
 \
 Map\
 100x100 for now\
 Toroidal (wrap-around) world: movement, distance, and vision calculations all wrap at the grid edges\
 Intend to scale once algorithmic efficiencies are implemented to 200x200/300x300 or more\
-## Obstacles: certain tiles are marked impassable. An entity cannot move onto an obstacle tile. Additionally, if two obstacle tiles are diagonally adjacent to each other, entities cannot cut through the diagonal gap between them (i.e. cannot step from one orthogonal neighbor of that pair to the other by crossing between the two diagonal obstacles) \'97 orthogonal adjacency to a single obstacle does not otherwise restrict movement.\
+Obstacles: brown tiles scattered in clusters (default: 3 clusters of 5 tiles each) placed randomly across the map's four quadrants \'97 each cluster drops an anchor tile in a random quadrant, then scatters the rest of the cluster at small random offsets around it, so a cluster is grouped but not necessarily one solid contiguous shape. No entity can move onto an obstacle tile. Additionally, if two obstacle tiles end up diagonally adjacent to each other, entities cannot cut through the diagonal gap between them (the two flanking orthogonal tiles are each individually enterable, just not interchangeable via a diagonal cut across that gap). When an entity's intended move is blocked, it falls back to the other axis, then to any open neighboring tile, then simply waits a step if fully boxed in \'97 a lightweight local avoidance rather than full pathfinding.\
 \
 Food\
-Food spawns in a batch on a fixed timer; each time the timer fires, all existing uneaten food is cleared and a fresh batch of a configurable size is scattered at random locations (feast/famine cycle rather than continuous trickle)\
+Food spawns in a batch on a fixed timer; each time the timer fires, all existing uneaten food is cleared and a fresh batch of a configurable size is scattered at random non-obstacle locations (feast/famine cycle rather than continuous trickle)\
 Eating food removes it from the map, restores a configurable amount of energy to the prey, and (if under the population cap) triggers reproduction\
 \
 Energy & Survival\
-Every entity has an energy pool that drains each tick by a base drain rate (scaled by the entity's individual hunger/metabolism multiplier and a global hunger multiplier) plus an additional cost per movement step taken that tick (predators pay an extra multiplier on top of the base move cost)\
+Every entity has an energy pool that drains each tick by a base drain rate (scaled by the entity's individual hunger/metabolism multiplier and a global hunger multiplier) plus an additional cost per movement step taken that tick (predators pay an extra multiplier on top of the base move cost); a camouflaged predator instead drains at a reduced rate and pays no move cost since it isn't moving\
 An entity dies (is removed from the simulation) when its energy reaches zero or below\
 Movement speed is fractional: an entity accumulates "movement progress" each tick equal to its speed, and takes one grid step for each whole unit accumulated \'97 so entities with speed above 1 can take multiple steps in a single tick, and entities with speed below 1 only move every few ticks\
 \
@@ -46,8 +45,12 @@ A global hard cap limits total creature count (prey + predators combined); when 
 A predator-specific cap limits predators to a configurable percentage share of the total population, checked both continuously and at the moment of predator reproduction\
 Random seed can be fixed for reproducible runs, or reseeded for a fresh random run\
 \
+Performance\
+Nearest-target lookups (prey scanning for the nearest predator in vision; predators scanning for the nearest prey in vision) use a uniform spatial hash grid rebuilt once per tick for each population, instead of every individual scanning the entire opposing population. Entities are bucketed by grid cell in a single O(total population) pass, and each lookup only inspects the handful of buckets overlapping its vision radius rather than every other entity. This keeps the per-tick simulation cost scaling close to O(n) with total population instead of O(n\'d7m), which matters once populations grow into the thousands.\
+Same-tile "did a predator just catch this prey" checks use a position lookup table (built once per tick) instead of scanning the full prey list on every predator movement step.\
+\
 Sim Concepts (place wherever makes sense)\
 Real-time dashboard: on-canvas overlay shows tick count, live prey/predator/food counts, and average prey speed/hunger; a rolling line chart tracks prey, predator, and food population history over time\
-Pathfinding for each entity to object of interest within vision radius: each tick, an entity scans a square radius around itself (wrapping at world edges) for the nearest qualifying target (prey look for nearest food or nearest predator; predators look for nearest prey) using wrapped grid distance, then takes a greedy step along whichever axis (x or y) has the larger remaining wrapped distance to close in on / flee from that target. This is a greedy, direct-line pursuit \'97 not full pathfinding with obstacle avoidance (see Obstacles above, not yet implemented against this movement logic).\
+Pathfinding for each entity to object of interest within vision radius: each tick, an entity scans a square radius around itself (wrapping at world edges) for the nearest qualifying target (prey look for nearest food or nearest non-camouflaged predator; predators look for nearest prey) using wrapped grid distance, then takes a greedy step along whichever axis (x or y) has the larger remaining wrapped distance to close in on / flee from that target, falling back around obstacles locally as described above. This is greedy, direct-line pursuit with local obstacle avoidance \'97 not full pathfinding.\
 Deconfliction of priorities: prey prioritize fleeing a predator spotted within vision radius over pathing to food; only when no predator is in range do they path to the nearest visible food; if neither is present they wander randomly\
 }
