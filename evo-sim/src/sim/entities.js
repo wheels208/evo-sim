@@ -1,4 +1,4 @@
-import { GRID_W, GRID_H, BAND, PREY_BANDS } from "./constants.js";
+import { GRID_W, GRID_H, BAND, PREY_BANDS, PREDATOR_BASE_ENERGY } from "./constants.js";
 import { clamp, choice, randomHueInBand, mutateHueWithinBands } from "./rng.js";
 import { isObstacle } from "./obstacles.js";
 
@@ -17,11 +17,11 @@ function pickBirthTile(parent, rng, obstacles) {
   return { x: parent.x, y: parent.y };
 }
 
-export function makeRandomPrey(rngFn, params) {
+export function makeRandomPrey(rngFn, params, band) {
   const { speedMin, speedMax } = params;
   const speed = speedMin + rngFn() * (speedMax - speedMin);
   const hungerMult = 0.7 + rngFn() * 0.6; // 0.7-1.3
-  const colorBand = choice(rngFn, PREY_BANDS);
+  const colorBand = band || choice(rngFn, PREY_BANDS);
   const hue = randomHueInBand(rngFn, BAND[colorBand]);
   return {
     id: Math.floor(rngFn() * 2 ** 31),
@@ -48,7 +48,7 @@ export function makeRandomPred(rngFn, params) {
     id: Math.floor(rngFn() * 2 ** 31),
     x: Math.floor(rngFn() * GRID_W),
     y: Math.floor(rngFn() * GRID_H),
-    energy: 120,
+    energy: PREDATOR_BASE_ENERGY,
     speed,
     hungerMult,
     hue,
@@ -92,7 +92,7 @@ export function spawnChildPred(parent, rng, params, obstacles) {
   const mutatedBase = mutateTrait(baseSpeed, speedMin, speedMax, mutationPct, rng);
   return {
     id: Math.floor(rng() * 2 ** 31),
-    x: nx, y: ny, energy: 120,
+    x: nx, y: ny, energy: PREDATOR_BASE_ENERGY,
     speed: mutatedBase * predatorSpeedMult,
     hungerMult: mutateTrait(parent.hungerMult, 0.2, 3.0, mutationPct, rng),
     hue: mutatePredHue(parent.hue, mutationPct, rng),

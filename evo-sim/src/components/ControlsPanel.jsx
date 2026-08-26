@@ -4,7 +4,7 @@ export default function ControlsPanel({ p }) {
   return (
     <div className="controls">
       <Slider label="Tick Rate (ticks/sec)" min={1} max={60} step={1} value={p.tickRate} setValue={p.setTickRate} />
-      <Slider label="Starting Prey" min={0} max={2000} step={10} value={p.startCreatures} setValue={p.setStartCreatures} />
+      <Slider label="Prey per Species" min={0} max={50} step={1} value={p.preyPerSpecies} setValue={p.setPreyPerSpecies} />
       <Slider label="Starting Carnivores" min={0} max={500} step={5} value={p.startCarnivores} setValue={p.setStartCarnivores} />
       <Slider label="Initial Food" min={0} max={5000} step={10} value={p.initialFood} setValue={p.setInitialFood} />
       <Slider label="Food per Spawn (replaces)" min={0} max={1000} step={10} value={p.foodPerSpawn} setValue={p.setFoodPerSpawn} />
@@ -23,6 +23,8 @@ export default function ControlsPanel({ p }) {
       <Slider label="Pred Rest (ticks)" min={0} max={60} step={1} value={p.predatorRestTicks} setValue={p.setPredatorRestTicks} />
       <Slider label="Pred Repro Energy ≥" min={0} max={400} step={5} value={p.predatorReproEnergy} setValue={p.setPredatorReproEnergy} />
       <Slider label="Predator Max Share %" min={5} max={90} step={1} value={p.predatorMaxSharePct} setValue={p.setPredatorMaxSharePct} />
+      <Slider label="Pred Engage Radius (tiles)" min={0} max={15} step={1} value={p.predatorEngageRadius} setValue={p.setPredatorEngageRadius} />
+      <Slider label="Pred Hunger Trigger %" min={0} max={1} step={0.05} value={p.predatorHungerTriggerPct} setValue={p.setPredatorHungerTriggerPct} format={(v) => (v * 100).toFixed(0) + "%"} />
 
       <Slider label="Camo Base Chance" min={0} max={0.1} step={0.005} value={p.camoBaseChance} setValue={p.setCamoBaseChance} format={(v) => (v * 100).toFixed(1) + "%"} />
       <Slider label="Camo Tendency Scale" min={0} max={1} step={0.05} value={p.camoTendencyScale} setValue={p.setCamoTendencyScale} />
@@ -42,7 +44,7 @@ export default function ControlsPanel({ p }) {
         <div className="label"><span>Random Seed</span></div>
         <input type="number" value={p.seed} onChange={(e) => p.setSeed(parseInt(e.target.value || "0", 10))}
                style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--panel)", color: "var(--text)" }} />
-        <div className="label"><span>Tip:</span><span>Adjust sliders then <b>Reset</b> to apply to a new run.</span></div>
+        <div className="label"><span>Tip:</span><span>Most sliders apply live, mid-run. Only population/generation settings (Prey per Species, Starting Carnivores, Initial Food, Obstacles, Seed) need a <b>Reset</b> to take effect.</span></div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { GRID_W, GRID_H } from "./constants.js";
+import { GRID_W, GRID_H, PREDATOR_BASE_ENERGY } from "./constants.js";
 import { randomFreeTile } from "./obstacles.js";
 import { SpatialGrid, buildTileOccupancy } from "./spatialGrid.js";
 import { wrappedManhattan, attemptStep } from "./movement.js";
@@ -129,6 +129,20 @@ export function stepSimulation(world, params, deltaMs, rng) {
         p.camoTicksLeft = Math.max(1, Math.floor(params.camoDuration));
         tryCatch(p);
         p.energy -= (params.baseTickDrain * p.hungerMult * params.hungerGlobal * params.camoDrainMult);
+        if (p.energy <= 0) preds.splice(i, 1);
+        continue;
+      }
+    }
+
+    // Lie in wait: a predator that spots prey doesn't chase unless the
+    // prey is already close, or it's hungry enough to stop being picky.
+    if (target) {
+      const distToTarget = wrappedManhattan(p.x, p.y, target.x, target.y);
+      const isHungry = p.energy <= params.predatorHungerTriggerPct * PREDATOR_BASE_ENERGY;
+      const shouldEngage = distToTarget <= params.predatorEngageRadius || isHungry;
+      if (!shouldEngage) {
+        tryCatch(p); // still catches anything that wanders directly onto it
+        p.energy -= (params.baseTickDrain * p.hungerMult * params.hungerGlobal);
         if (p.energy <= 0) preds.splice(i, 1);
         continue;
       }

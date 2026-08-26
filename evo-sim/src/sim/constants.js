@@ -26,11 +26,19 @@ export const BAND = {
 
 export const PREY_BANDS = ["preyYellow", "preyGreen", "preyBlue", "preyPurple", "preyPink"];
 
+// Baseline spawn energy for predators — used both when creating one and
+// as the 100% reference point for the hunger-trigger threshold below.
+export const PREDATOR_BASE_ENERGY = 120;
+
 export const DEFAULTS = {
   tickRate: 15,
-  startCreatures: 150,
-  initialFood: 300,
-  foodPerSpawn: 50,
+  preyPerSpecies: 3, // spawned per color band at reset (5 bands)
+  // Scaled down 10x alongside the prey count cut (was 150 prey / 300
+  // food / 50 per spawn) to keep the same per-capita food economy —
+  // scaling prey count down without scaling food down caused runaway
+  // reproduction instead of the intended smaller, steadier population.
+  initialFood: 30,
+  foodPerSpawn: 5,
   spawnIntervalMs: 1000,
   baseTickDrain: 1.0,
   moveCost: 0.2,
@@ -51,6 +59,8 @@ export const DEFAULTS = {
   predatorMoveCostMult: 1.3,
   predatorReproEnergy: 200,
   predatorMaxSharePct: 40,
+  predatorEngageRadius: 2, // only chase prey this close...
+  predatorHungerTriggerPct: 0.25, // ...unless energy has dropped to this fraction of PREDATOR_BASE_ENERGY
 
   // Camouflage ("lie in wait")
   camoBaseChance: 0.01, // flat per-tick chance even with zero tendency

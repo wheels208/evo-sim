@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTheme, getThemePalette } from "./hooks/useTheme.js";
 import { useSimulationLoop } from "./hooks/useSimulationLoop.js";
 import { mulberry32 } from "./sim/rng.js";
-import { DEFAULTS, CHART_HISTORY } from "./sim/constants.js";
+import { DEFAULTS, CHART_HISTORY, PREY_BANDS } from "./sim/constants.js";
 import { generateObstacles, randomFreeTile } from "./sim/obstacles.js";
 import { makeRandomPrey, makeRandomPred } from "./sim/entities.js";
 import { stepSimulation } from "./sim/simulation.js";
@@ -18,7 +18,7 @@ export default function App() {
 
   /* sliders / params */
   const [tickRate, setTickRate] = useState(DEFAULTS.tickRate);
-  const [startCreatures, setStartCreatures] = useState(DEFAULTS.startCreatures);
+  const [preyPerSpecies, setPreyPerSpecies] = useState(DEFAULTS.preyPerSpecies);
   const [initialFood, setInitialFood] = useState(DEFAULTS.initialFood);
   const [foodPerSpawn, setFoodPerSpawn] = useState(DEFAULTS.foodPerSpawn);
   const [spawnIntervalMs, setSpawnIntervalMs] = useState(DEFAULTS.spawnIntervalMs);
@@ -41,6 +41,8 @@ export default function App() {
   const [predatorMoveCostMult, setPredatorMoveCostMult] = useState(DEFAULTS.predatorMoveCostMult);
   const [predatorReproEnergy, setPredatorReproEnergy] = useState(DEFAULTS.predatorReproEnergy);
   const [predatorMaxSharePct, setPredatorMaxSharePct] = useState(DEFAULTS.predatorMaxSharePct);
+  const [predatorEngageRadius, setPredatorEngageRadius] = useState(DEFAULTS.predatorEngageRadius);
+  const [predatorHungerTriggerPct, setPredatorHungerTriggerPct] = useState(DEFAULTS.predatorHungerTriggerPct);
 
   const [camoBaseChance, setCamoBaseChance] = useState(DEFAULTS.camoBaseChance);
   const [camoTendencyScale, setCamoTendencyScale] = useState(DEFAULTS.camoTendencyScale);
@@ -65,6 +67,7 @@ export default function App() {
     spawnIntervalMs, foodPerSpawn, visionRadius, predatorVisionMult, energyPerFood,
     maxCreatures, moveCost, baseTickDrain, hungerGlobal, predatorMoveCostMult,
     predatorRestTicks, energyPerKill, predatorReproEnergy, predatorMaxSharePct,
+    predatorEngageRadius, predatorHungerTriggerPct,
     speedMin, speedMax, mutationPct, predatorSpeedMult,
     camoBaseChance, camoTendencyScale, camoDuration, camoDrainMult,
   };
@@ -107,11 +110,13 @@ export default function App() {
       const { x, y } = randomFreeTile(rngFn, world.obstacles);
       world.food.add(`${x},${y}`);
     }
-    for (let i = 0; i < startCreatures; i++) {
-      const c = makeRandomPrey(rngFn, paramsRef.current);
-      const tile = randomFreeTile(rngFn, world.obstacles);
-      c.x = tile.x; c.y = tile.y;
-      world.prey.push(c);
+    for (const band of PREY_BANDS) {
+      for (let i = 0; i < preyPerSpecies; i++) {
+        const c = makeRandomPrey(rngFn, paramsRef.current, band);
+        const tile = randomFreeTile(rngFn, world.obstacles);
+        c.x = tile.x; c.y = tile.y;
+        world.prey.push(c);
+      }
     }
     for (let i = 0; i < startCarnivores; i++) {
       const c = makeRandomPred(rngFn, paramsRef.current);
@@ -170,13 +175,14 @@ export default function App() {
   };
 
   const sliderProps = {
-    tickRate, setTickRate, startCreatures, setStartCreatures, initialFood, setInitialFood,
+    tickRate, setTickRate, preyPerSpecies, setPreyPerSpecies, initialFood, setInitialFood,
     foodPerSpawn, setFoodPerSpawn, spawnIntervalMs, setSpawnIntervalMs, baseTickDrain, setBaseTickDrain,
     moveCost, setMoveCost, hungerGlobal, setHungerGlobal, energyPerFood, setEnergyPerFood,
     predatorVisionMult, setPredatorVisionMult, predatorSpeedMult, setPredatorSpeedMult,
     predatorMoveCostMult, setPredatorMoveCostMult, energyPerKill, setEnergyPerKill,
     predatorRestTicks, setPredatorRestTicks, predatorReproEnergy, setPredatorReproEnergy,
     predatorMaxSharePct, setPredatorMaxSharePct, startCarnivores, setStartCarnivores,
+    predatorEngageRadius, setPredatorEngageRadius, predatorHungerTriggerPct, setPredatorHungerTriggerPct,
     camoBaseChance, setCamoBaseChance, camoTendencyScale, setCamoTendencyScale,
     camoDuration, setCamoDuration, camoDrainMult, setCamoDrainMult,
     obstacleClusterCount, setObstacleClusterCount, obstacleClusterSize, setObstacleClusterSize,

@@ -10,17 +10,18 @@ Purpose: A lightweight simulation to demonstrate how traits adapt to environment
 \
 Prey\
 Spawn with randomly assigned trait values: movement speed, hunger/metabolism multiplier, and a hue within one of the species color bands\
+A fixed, configurable number of prey (default 3) are spawned per color band at the start of a run, rather than one large randomly-banded pool \'97 so a run starts with 2-5 visually distinct founding lineages (one per band) instead of a single soup of individuals\
 When prey eat food they spawn a child that inherits the parent's trait profile with each trait nudged by a random +/- "mutation" percentage\
 Each species starts as a color band with each subsequent generation carrying a slightly mutated hue that stays within that band, so lineage stays visually traceable over generations\
-Species/color bands: Yellow, Green, Blue, Purple, Pink (5 bands, spaced around the hue wheel away from the red bands reserved for predators)\
-## Spawn 2-5 discrete species at simulation start, each assigned to one of the color bands, rather than assigning each individual prey a random band independently\
+Species/color bands: Yellow, Green, Blue, Purple, Pink (5 bands, spaced around the hue wheel away from the red bands reserved for predators and clear of food's fixed neon-green hue)\
 \
 Predators\
 Spawn in a red hue (two red sub-bands used to add some initial hue variety)\
 Can see farther than prey (vision radius multiplier)\
 Move faster than prey by default (speed multiplier), but pay a higher energy cost per move step than prey\
+"Lie in wait" by default: a predator that spots prey within its vision radius does not automatically give chase. It only actively moves to attack when the prey is already within a short configurable engagement radius (default 2 tiles), OR when its own energy has dropped to a configurable fraction of its baseline spawn energy (default 25%) and hunger overrides its patience. Outside of those triggers it holds its position (still catching anything that wanders directly onto its own tile) rather than burning energy chasing everything it can see.\
 After landing a kill, enters a rest/digestion period (configurable number of ticks) where it does not move but still drains energy\
-"Lie in wait" / camouflage: a predator with no prey target in vision can spontaneously go camouflaged for a configurable number of ticks \'97 a small flat chance applies to every predator each tick, plus an additional chance scaled by the predator's own heritable "camouflage tendency" trait (0-1, mutates and passes to offspring like any other trait, so lineages can drift toward more or less ambush-prone). While camouflaged, the predator is completely immobile, is invisible to prey's predator-detection (prey will not flee it or route around it), and drains energy at a reduced rate versus actively hunting. A prey that wanders onto the camouflaged predator's tile is still caught \'97 that's the ambush payoff. Shown on-screen as a white border around the predator instead of its normal outline.\
+"Lie in wait" / camouflage: separately from the engagement patience above, a predator with no prey target in vision at all can spontaneously go camouflaged for a configurable number of ticks \'97 a small flat chance applies to every predator each tick, plus an additional chance scaled by the predator's own heritable "camouflage tendency" trait (0-1, mutates and passes to offspring like any other trait, so lineages can drift toward more or less ambush-prone). While camouflaged, the predator is completely immobile, is invisible to prey's predator-detection (prey will not flee it or route around it), and drains energy at a reduced rate versus actively hunting. A prey that wanders onto the camouflaged predator's tile is still caught \'97 that's the ambush payoff. Shown on-screen as a white border around the predator instead of its normal outline.\
 Once consuming prey, if the predator's energy is at or above a reproduction threshold, and the predator population is still under its population-share cap, and the global population cap isn't exceeded, the predator spawns a child (with a small energy cost charged to the parent for reproducing)\
 Child (predator or prey) will have a slightly mutated hue (kept within the parent's color band) along with mutated inherited traits (including camouflage tendency, for predators)\
 Predator population is capped as a percentage of total population (predator + prey) to prevent predators from crowding out prey\
@@ -34,9 +35,10 @@ Obstacles: brown tiles scattered in clusters (default: 3 clusters of 5 tiles eac
 Food\
 Food spawns in a batch on a fixed timer; each time the timer fires, all existing uneaten food is cleared and a fresh batch of a configurable size is scattered at random non-obstacle locations (feast/famine cycle rather than continuous trickle)\
 Eating food removes it from the map, restores a configurable amount of energy to the prey, and (if under the population cap) triggers reproduction\
+Default starting food and per-cycle food amounts are scaled to the (now much smaller) default starting prey count, to keep per-capita food availability roughly steady rather than flooding a small starting population \'97 worth re-tuning together any time the starting population size changes materially\
 \
 Energy & Survival\
-Every entity has an energy pool that drains each tick by a base drain rate (scaled by the entity's individual hunger/metabolism multiplier and a global hunger multiplier) plus an additional cost per movement step taken that tick (predators pay an extra multiplier on top of the base move cost); a camouflaged predator instead drains at a reduced rate and pays no move cost since it isn't moving\
+Every entity has an energy pool that drains each tick by a base drain rate (scaled by the entity's individual hunger/metabolism multiplier and a global hunger multiplier) plus an additional cost per movement step taken that tick (predators pay an extra multiplier on top of the base move cost); a camouflaged or lying-in-wait predator instead drains at a reduced/base rate and pays no move cost since it isn't moving\
 An entity dies (is removed from the simulation) when its energy reaches zero or below\
 Movement speed is fractional: an entity accumulates "movement progress" each tick equal to its speed, and takes one grid step for each whole unit accumulated \'97 so entities with speed above 1 can take multiple steps in a single tick, and entities with speed below 1 only move every few ticks\
 \
@@ -44,6 +46,9 @@ Population Controls\
 A global hard cap limits total creature count (prey + predators combined); when exceeded, the oldest-spawned prey are removed first, then oldest predators if still over cap\
 A predator-specific cap limits predators to a configurable percentage share of the total population, checked both continuously and at the moment of predator reproduction\
 Random seed can be fixed for reproducible runs, or reseeded for a fresh random run\
+\
+Live Tuning\
+Most sliders (drain rates, vision, speed bounds, move costs, camouflage and engagement parameters, food-per-cycle amount, etc.) are read fresh every tick, so adjusting them takes effect immediately on a running simulation \'97 no need to pause or reset. Only settings that are only ever read at world-generation time (prey-per-species count, starting carnivore count, initial food amount, obstacle cluster count/size, random seed) require a Reset to take effect, since they only affect how a fresh world is built.\
 \
 Performance\
 Nearest-target lookups (prey scanning for the nearest predator in vision; predators scanning for the nearest prey in vision) use a uniform spatial hash grid rebuilt once per tick for each population, instead of every individual scanning the entire opposing population. Entities are bucketed by grid cell in a single O(total population) pass, and each lookup only inspects the handful of buckets overlapping its vision radius rather than every other entity. This keeps the per-tick simulation cost scaling close to O(n) with total population instead of O(n\'d7m), which matters once populations grow into the thousands.\
