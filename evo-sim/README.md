@@ -6,12 +6,27 @@ A 100x100-grid predator/prey evolution sandbox: prey chase food and flee predato
 
 Requires [Node.js](https://nodejs.org/) (LTS, 18+) and npm, which come bundled together.
 
+**macOS/Linux:** install via [nvm](https://github.com/nvm-sh/nvm) if you don't have Node already:
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+source ~/.zshrc && nvm install --lts
+```
+
+**Windows 11:** install via `winget` (PowerShell):
+```powershell
+winget install --id Git.Git -e --source winget
+winget install --id OpenJS.NodeJS.LTS -e --source winget
+```
+Reopen PowerShell afterward so `git`/`node`/`npm` are on `PATH`.
+
+Then, from this folder on either OS:
+
 ```bash
 npm install
 npm run dev
 ```
 
-Then open the printed `http://localhost:5173` URL in a browser. `npm run build` produces a static production build in `dist/`; `npm run preview` serves that build locally.
+Open the printed `http://localhost:5173` URL in a browser. `npm run build` produces a static production build in `dist/`; `npm run preview` serves that build locally.
 
 ## Project layout
 
