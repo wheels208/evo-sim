@@ -14,7 +14,9 @@ export const CHART_HISTORY = 400; // points kept
 // bands reserved for predators.
 export const BAND = {
   preyYellow: [45, 65],
-  preyGreen: [100, 140],
+  // Kept clear of food's fixed neon-green hue (~110deg, #39FF14) so
+  // green-lineage prey don't read as food dots at a glance.
+  preyGreen: [155, 178],
   preyBlue: [200, 240],
   preyPurple: [265, 290],
   preyPink: [310, 335],
