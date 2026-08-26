@@ -65,7 +65,7 @@ export const DEFAULTS = {
   // Camouflage ("lie in wait")
   camoBaseChance: 0.01, // flat per-tick chance even with zero tendency
   camoTendencyScale: 0.25, // additional chance contributed by camoTendency (0-1)
-  camoDuration: 8, // ticks spent immobile/hidden once triggered
+  camoDuration: 30, // ticks spent immobile/hidden once triggered — long enough for prey to wander into range
   camoDrainMult: 0.4, // energy drain multiplier while camouflaged
 
   // Obstacles
