@@ -1,0 +1,53 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2870
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica-Light;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 ## double hashes demarcate unimplemented features\
+\
+Purpose: A lightweight simulation to demonstrate how traits adapt to environmental factors. Prey pursue food and randomly mutate predefined traits that benefit or detract from survivability while hunted by predators. Predators hunt and reproduce and mutate randomly as well, but can only consume prey.\
+\
+Prey\
+Spawn with randomly assigned trait values: movement speed, hunger/metabolism multiplier, and a hue within one of the species color bands\
+When prey eat food they spawn a child that inherits the parent's trait profile with each trait nudged by a random +/- "mutation" percentage\
+Each species starts as a color band with each subsequent generation carrying a slightly mutated hue that stays within that band, so lineage stays visually traceable over generations\
+Currently implemented species/color bands: Yellow, Blue\
+## Expand prey species/color bands to the full intended palette: Green, Purple, Pink (5 total species bands)\
+## Spawn 2-5 distinct species at simulation start, each assigned to one of the color bands, rather than assigning each individual prey a random band independently\
+\
+Predators\
+Spawn in a red hue (two red sub-bands used to add some initial hue variety)\
+Can see farther than prey (vision radius multiplier)\
+Move faster than prey by default (speed multiplier), but pay a higher energy cost per move step than prey\
+After landing a kill, enters a rest/digestion period (configurable number of ticks) where it does not move but still drains energy\
+Once consuming prey, if the predator's energy is at or above a reproduction threshold, and the predator population is still under its population-share cap, and the global population cap isn't exceeded, the predator spawns a child (with a small energy cost charged to the parent for reproducing)\
+Child (predator or prey) will have a slightly mutated hue (kept within the parent's color band) along with mutated inherited traits\
+Predator population is capped as a percentage of total population (predator + prey) to prevent predators from crowding out prey\
+## "Lie in wait" / camouflage trait: while active, the predator is immobile, is hidden from prey vision (prey will not detect or flee from a camouflaged predator), and drains energy at a reduced rate compared to actively moving/hunting. This is a heritable trait like other mutable traits (offspring may inherit the parent's tendency toward it), but it can also arise spontaneously/randomly independent of inheritance.\
+\
+Map\
+100x100 for now\
+Toroidal (wrap-around) world: movement, distance, and vision calculations all wrap at the grid edges\
+Intend to scale once algorithmic efficiencies are implemented to 200x200/300x300 or more\
+## Obstacles: certain tiles are marked impassable. An entity cannot move onto an obstacle tile. Additionally, if two obstacle tiles are diagonally adjacent to each other, entities cannot cut through the diagonal gap between them (i.e. cannot step from one orthogonal neighbor of that pair to the other by crossing between the two diagonal obstacles) \'97 orthogonal adjacency to a single obstacle does not otherwise restrict movement.\
+\
+Food\
+Food spawns in a batch on a fixed timer; each time the timer fires, all existing uneaten food is cleared and a fresh batch of a configurable size is scattered at random locations (feast/famine cycle rather than continuous trickle)\
+Eating food removes it from the map, restores a configurable amount of energy to the prey, and (if under the population cap) triggers reproduction\
+\
+Energy & Survival\
+Every entity has an energy pool that drains each tick by a base drain rate (scaled by the entity's individual hunger/metabolism multiplier and a global hunger multiplier) plus an additional cost per movement step taken that tick (predators pay an extra multiplier on top of the base move cost)\
+An entity dies (is removed from the simulation) when its energy reaches zero or below\
+Movement speed is fractional: an entity accumulates "movement progress" each tick equal to its speed, and takes one grid step for each whole unit accumulated \'97 so entities with speed above 1 can take multiple steps in a single tick, and entities with speed below 1 only move every few ticks\
+\
+Population Controls\
+A global hard cap limits total creature count (prey + predators combined); when exceeded, the oldest-spawned prey are removed first, then oldest predators if still over cap\
+A predator-specific cap limits predators to a configurable percentage share of the total population, checked both continuously and at the moment of predator reproduction\
+Random seed can be fixed for reproducible runs, or reseeded for a fresh random run\
+\
+Sim Concepts (place wherever makes sense)\
+Real-time dashboard: on-canvas overlay shows tick count, live prey/predator/food counts, and average prey speed/hunger; a rolling line chart tracks prey, predator, and food population history over time\
+Pathfinding for each entity to object of interest within vision radius: each tick, an entity scans a square radius around itself (wrapping at world edges) for the nearest qualifying target (prey look for nearest food or nearest predator; predators look for nearest prey) using wrapped grid distance, then takes a greedy step along whichever axis (x or y) has the larger remaining wrapped distance to close in on / flee from that target. This is a greedy, direct-line pursuit \'97 not full pathfinding with obstacle avoidance (see Obstacles above, not yet implemented against this movement logic).\
+Deconfliction of priorities: prey prioritize fleeing a predator spotted within vision radius over pathing to food; only when no predator is in range do they path to the nearest visible food; if neither is present they wander randomly\
+}
