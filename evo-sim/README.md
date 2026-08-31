@@ -1,6 +1,8 @@
 # Evolution Sim
 
-A 100x100-grid predator/prey evolution sandbox: prey chase food and flee predators, mutate inherited traits (speed, hunger, hue, and — for predators — camouflage tendency) each generation, and everything is tunable live via the sliders.
+A 100x100-grid predator/prey evolution sandbox: prey chase food and flee predators, mutate inherited traits (speed, hunger, vision radius, hue, prey camouflage level, and predator camouflage tendency) each generation, and everything is tunable live via the sliders.
+
+Click any animal on the map to open an inspector showing its lineage, generation, current needs, and a trait comparison against its gen-0 founder or any of its 3 most recent ancestors. Hover the population chart for a per-tick readout of prey/predator/food counts and total population.
 
 ## Running it
 

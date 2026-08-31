@@ -54,9 +54,13 @@ export class SpatialGrid {
         const list = this.buckets.get(this._bucketKey(cx, cy));
         if (!list) continue;
         for (const cand of list) {
-          if (predicate && !predicate(cand)) continue;
           const d = distanceFn(x, y, cand.x, cand.y);
-          if (d <= radius && d < bestDist) { bestDist = d; nearest = cand; }
+          if (d > radius || d >= bestDist) continue;
+          // Predicate receives the distance too, so callers can apply a
+          // per-candidate effective radius (e.g. prey camouflage) rather
+          // than only the single sweep radius.
+          if (predicate && !predicate(cand, d)) continue;
+          bestDist = d; nearest = cand;
         }
       }
     }

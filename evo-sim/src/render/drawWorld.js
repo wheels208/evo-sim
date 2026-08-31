@@ -25,7 +25,7 @@ function drawGrid(ctx, palette) {
   ctx.strokeStyle = palette.gridMajor; ctx.stroke();
 }
 
-export function drawWorld(canvas, palette, world) {
+export function drawWorld(canvas, palette, world, selectedId = null) {
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   drawGrid(ctx, palette);
@@ -44,13 +44,17 @@ export function drawWorld(canvas, palette, world) {
     ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
   }
 
-  // Prey
+  // Prey — camouflage level fades the fill (visual cue only; the
+  // mechanic itself lives in the predator detection check).
   for (const c of world.prey) {
     const lightness = palette.isDark ? "62%" : "50%";
+    const fade = 1 - (c.camoLevel || 0) * 0.15;
+    ctx.globalAlpha = fade;
     ctx.fillStyle = `hsl(${c.hue}, 90%, ${lightness})`;
     ctx.fillRect(c.x * CELL_SIZE, c.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
     ctx.strokeStyle = palette.preyStroke; ctx.lineWidth = 1;
     ctx.strokeRect(c.x * CELL_SIZE + 0.5, c.y * CELL_SIZE + 0.5, CELL_SIZE - 1, CELL_SIZE - 1);
+    ctx.globalAlpha = 1;
   }
 
   // Predators
@@ -60,8 +64,18 @@ export function drawWorld(canvas, palette, world) {
     ctx.fillRect(p.x * CELL_SIZE, p.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
     const camouflaged = p.camoTicksLeft > 0;
     ctx.strokeStyle = camouflaged ? palette.camoStroke : palette.predStroke;
-    ctx.lineWidth = camouflaged ? 1.5 : 1.5;
+    ctx.lineWidth = 1.5;
     ctx.strokeRect(p.x * CELL_SIZE + 0.5, p.y * CELL_SIZE + 0.5, CELL_SIZE - 1, CELL_SIZE - 1);
+  }
+
+  // Selection ring for the inspected animal
+  if (selectedId != null) {
+    const sel = world.prey.find((e) => e.id === selectedId) || world.preds.find((e) => e.id === selectedId);
+    if (sel) {
+      ctx.strokeStyle = palette.selection;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(sel.x * CELL_SIZE - 2.5, sel.y * CELL_SIZE - 2.5, CELL_SIZE + 4, CELL_SIZE + 4);
+    }
   }
 
   // Overlay legend
@@ -74,5 +88,6 @@ export function drawWorld(canvas, palette, world) {
   ctx.fillStyle = 'hsl(0, 100%, 52%)'; ctx.fillRect(ox, oy + 32, 10, 10); ctx.fillStyle = palette.text; ctx.fillText('Predators (Red)', ox + 16, oy + 32 + 10 - 1);
   ctx.strokeStyle = palette.camoStroke; ctx.lineWidth = 1.5; ctx.strokeRect(ox + 0.5, oy + 48 + 0.5, 9, 9);
   ctx.fillStyle = palette.text; ctx.fillText('Predator in stealth (white border)', ox + 16, oy + 48 + 10 - 1);
-  ctx.fillStyle = palette.text; ctx.fillText('Prey (5 hue bands, mutate within lineage)', ox, oy + 64 + 10 - 1);
+  ctx.fillStyle = palette.text; ctx.fillText('Prey: yellow/green/teal/blue/purple (faded = camouflaged)', ox, oy + 64 + 10 - 1);
+  ctx.fillStyle = palette.text; ctx.fillText('Click any animal to inspect it', ox, oy + 80 + 10 - 1);
 }

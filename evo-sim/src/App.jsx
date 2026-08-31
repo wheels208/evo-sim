@@ -52,11 +52,17 @@ export default function App() {
   const [obstacleClusterCount, setObstacleClusterCount] = useState(DEFAULTS.obstacleClusterCount);
   const [obstacleClusterSize, setObstacleClusterSize] = useState(DEFAULTS.obstacleClusterSize);
 
+  const [preyCamoMaxLevel, setPreyCamoMaxLevel] = useState(DEFAULTS.preyCamoMaxLevel);
+  const [preyCamoStepPct, setPreyCamoStepPct] = useState(DEFAULTS.preyCamoStepPct);
+  const [preyCamoMutateChance, setPreyCamoMutateChance] = useState(DEFAULTS.preyCamoMutateChance);
+
   const [stats, setStats] = useState({ pop: 0, preds: 0, food: 0, avgSpeed: 0, avgHunger: 0 });
+  const [selected, setSelected] = useState(null);
+  const hoverIndexRef = useRef(-1);
 
   /* world + chart history live in refs so the tick loop never depends on stale render closures */
   const worldRef = useRef({ prey: [], preds: [], food: new Set(), obstacles: new Set(), lastSpawn: 0 });
-  const histRef = useRef({ prey: [], preds: [], food: [] });
+  const histRef = useRef({ prey: [], preds: [], food: [], ticks: [] });
   const canvasRef = useRef(null);
   const chartCanvasRef = useRef(null);
   const rngRef = useRef(mulberry32(Math.floor(Math.random() * 2 ** 31)));
@@ -70,15 +76,20 @@ export default function App() {
     predatorEngageRadius, predatorHungerTriggerPct,
     speedMin, speedMax, mutationPct, predatorSpeedMult,
     camoBaseChance, camoTendencyScale, camoDuration, camoDrainMult,
+    visionMin: DEFAULTS.visionMin, visionMax: DEFAULTS.visionMax,
+    preyCamoMaxLevel, preyCamoStepPct, preyCamoMutateChance,
   };
   const tickRateRef = useRef(tickRate);
   tickRateRef.current = tickRate;
 
+  const selectedIdRef = useRef(null);
+  selectedIdRef.current = selected?.id ?? null;
+
   function draw() {
-    drawWorld(canvasRef.current, getThemePalette(), worldRef.current);
+    drawWorld(canvasRef.current, getThemePalette(), worldRef.current, selectedIdRef.current);
   }
   function redrawChart() {
-    drawChart(chartCanvasRef.current, getThemePalette(), histRef.current);
+    drawChart(chartCanvasRef.current, getThemePalette(), histRef.current, hoverIndexRef.current);
   }
 
   function setStatsSummary() {
@@ -92,13 +103,14 @@ export default function App() {
     setStats({ pop, preds: preds.length, food: food.size, avgSpeed: +avgSpeed.toFixed(2), avgHunger: +avgHunger.toFixed(2) });
   }
 
-  function pushHistoryAndRedraw() {
+  function pushHistoryAndRedraw(tickNo = 0) {
     const { prey, preds, food } = worldRef.current;
     const h = histRef.current;
     h.prey.push(prey.length);
     h.preds.push(preds.length);
     h.food.push(food.size);
-    if (h.prey.length > CHART_HISTORY) { h.prey.shift(); h.preds.shift(); h.food.shift(); }
+    h.ticks.push(tickNo);
+    if (h.prey.length > CHART_HISTORY) { h.prey.shift(); h.preds.shift(); h.food.shift(); h.ticks.shift(); }
     redrawChart();
   }
 
@@ -126,10 +138,11 @@ export default function App() {
     }
 
     worldRef.current = world;
-    histRef.current = { prey: [], preds: [], food: [] };
+    histRef.current = { prey: [], preds: [], food: [], ticks: [] };
+    setSelected(null);
     resetTickCount();
     setStatsSummary();
-    pushHistoryAndRedraw();
+    pushHistoryAndRedraw(0);
     draw();
   }
 
@@ -139,7 +152,7 @@ export default function App() {
       stepSimulation(worldRef.current, paramsRef.current, delta, rngRef.current);
       draw();
     },
-    onSample: () => { setStatsSummary(); pushHistoryAndRedraw(); },
+    onSample: (tickNo) => { setStatsSummary(); pushHistoryAndRedraw(tickNo); },
   });
 
   /* init + redraw on theme change */
@@ -186,6 +199,8 @@ export default function App() {
     camoBaseChance, setCamoBaseChance, camoTendencyScale, setCamoTendencyScale,
     camoDuration, setCamoDuration, camoDrainMult, setCamoDrainMult,
     obstacleClusterCount, setObstacleClusterCount, obstacleClusterSize, setObstacleClusterSize,
+    preyCamoMaxLevel, setPreyCamoMaxLevel, preyCamoStepPct, setPreyCamoStepPct,
+    preyCamoMutateChance, setPreyCamoMutateChance,
     visionRadius, setVisionRadius, speedMin, setSpeedMin, speedMax, setSpeedMax,
     mutationPct, setMutationPct, maxCreatures, setMaxCreatures, seed, setSeed,
   };
@@ -203,10 +218,17 @@ export default function App() {
           toggleRun={toggleRun}
           handleReset={handleReset}
           handleReseed={handleReseed}
+          worldRef={worldRef}
+          selected={selected}
+          setSelected={setSelected}
         />
 
         <div className="panel">
-          <PopulationChart chartCanvasRef={chartCanvasRef} />
+          <PopulationChart
+            chartCanvasRef={chartCanvasRef}
+            histRef={histRef}
+            onHoverIndex={(i) => { hoverIndexRef.current = i; redrawChart(); }}
+          />
           <ControlsPanel p={sliderProps} />
         </div>
       </div>

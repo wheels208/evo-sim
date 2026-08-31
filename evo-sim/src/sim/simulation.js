@@ -28,17 +28,20 @@ export function stepSimulation(world, params, deltaMs, rng) {
     }
   }
 
-  const vr = Math.floor(params.visionRadius);
-  const predVR = Math.max(1, Math.floor(params.visionRadius * params.predatorVisionMult));
+  // Grid cell size is sized off the global baseline; per-entity vision
+  // radii vary around it and queryNearest scales its bucket sweep to
+  // whatever radius each individual actually passes in.
+  const gridCell = Math.max(1, Math.floor(params.visionRadius));
 
   // Spatial index of (non-camouflaged) predators, for prey to detect.
   const visiblePreds = preds.filter((p) => p.camoTicksLeft <= 0);
-  const predGrid = new SpatialGrid(Math.max(1, vr), GRID_W, GRID_H);
+  const predGrid = new SpatialGrid(gridCell, GRID_W, GRID_H);
   predGrid.build(visiblePreds);
 
   // --- PREY ---
   for (let i = prey.length - 1; i >= 0; i--) {
     const c = prey[i];
+    const vr = Math.max(1, Math.floor(c.visionRadius));
 
     const nearestPred = predGrid.queryNearest(c.x, c.y, vr, wrappedManhattan);
 
@@ -82,9 +85,18 @@ export function stepSimulation(world, params, deltaMs, rng) {
   }
 
   // --- PREDATORS ---
-  const preyGrid = new SpatialGrid(Math.max(1, predVR), GRID_W, GRID_H);
+  const preyGrid = new SpatialGrid(gridCell, GRID_W, GRID_H);
   preyGrid.build(prey);
   const preyTileMap = buildTileOccupancy(prey);
+
+  // Prey camouflage shrinks the range at which THIS prey is detectable,
+  // and nothing else about it. Each level cuts the predator's effective
+  // detection radius by preyCamoStepPct (e.g. a 4-tile-vision predator
+  // vs a 25%-camo prey only spots it from 3 tiles).
+  const detectableWithin = (predRadius, c) => {
+    const reduction = (c.camoLevel || 0) * params.preyCamoStepPct;
+    return Math.floor(predRadius * (1 - reduction));
+  };
 
   const tryCatch = (p) => {
     const occupant = preyTileMap.get(`${p.x},${p.y}`);
@@ -121,7 +133,11 @@ export function stepSimulation(world, params, deltaMs, rng) {
       continue;
     }
 
-    const target = preyGrid.queryNearest(p.x, p.y, predVR, wrappedManhattan);
+    const predVR = Math.max(1, Math.floor(p.visionRadius));
+    const target = preyGrid.queryNearest(
+      p.x, p.y, predVR, wrappedManhattan,
+      (c, d) => d <= detectableWithin(predVR, c)
+    );
 
     if (!target) {
       const camoChance = params.camoBaseChance + p.camoTendency * params.camoTendencyScale;

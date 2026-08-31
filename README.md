@@ -1,6 +1,6 @@
 # Evo Sim
 
-A 100x100-grid predator/prey evolution sandbox built with React + Vite. Prey chase food and flee predators, mutate inherited traits (speed, hunger, hue, and — for predators — camouflage tendency and "lie in wait" patience) each generation, and everything is tunable live via on-screen sliders while it runs.
+A 100x100-grid predator/prey evolution sandbox built with React + Vite. Prey chase food and flee predators, mutate inherited traits (speed, hunger, vision radius, hue, prey camouflage, and predator "lie in wait" tendency) each generation, and everything is tunable live via on-screen sliders while it runs. Click any animal to inspect its lineage and compare its stats against its ancestors; hover the chart for per-tick population readouts.
 
 The actual project lives in the [`evo-sim/`](evo-sim) subfolder — that's where you run npm commands from.
 

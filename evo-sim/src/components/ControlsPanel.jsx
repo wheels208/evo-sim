@@ -31,10 +31,14 @@ export default function ControlsPanel({ p }) {
       <Slider label="Camo Duration (ticks)" min={1} max={60} step={1} value={p.camoDuration} setValue={p.setCamoDuration} />
       <Slider label="Camo Drain ×" min={0.1} max={1} step={0.05} value={p.camoDrainMult} setValue={p.setCamoDrainMult} />
 
+      <Slider label="Prey Camo Max Level" min={0} max={4} step={1} value={p.preyCamoMaxLevel} setValue={p.setPreyCamoMaxLevel} />
+      <Slider label="Prey Camo per Level" min={0} max={0.25} step={0.05} value={p.preyCamoStepPct} setValue={p.setPreyCamoStepPct} format={(v) => (v * 100).toFixed(0) + "%"} />
+      <Slider label="Prey Camo Mutate Chance" min={0} max={1} step={0.05} value={p.preyCamoMutateChance} setValue={p.setPreyCamoMutateChance} format={(v) => (v * 100).toFixed(0) + "%"} />
+
       <Slider label="Obstacle Clusters" min={0} max={20} step={1} value={p.obstacleClusterCount} setValue={p.setObstacleClusterCount} />
       <Slider label="Obstacle Cluster Size" min={1} max={30} step={1} value={p.obstacleClusterSize} setValue={p.setObstacleClusterSize} />
 
-      <Slider label="Vision Radius (Prey)" min={1} max={25} step={1} value={p.visionRadius} setValue={p.setVisionRadius} />
+      <Slider label="Vision Radius (baseline)" min={1} max={25} step={1} value={p.visionRadius} setValue={p.setVisionRadius} />
       <Slider label="Speed Min (Prey Base)" min={0.1} max={5} step={0.1} value={p.speedMin} setValue={(v) => p.setSpeedMin(Math.min(v, p.speedMax - 0.1))} />
       <Slider label="Speed Max (Prey Base)" min={0.2} max={6} step={0.1} value={p.speedMax} setValue={(v) => p.setSpeedMax(Math.max(v, p.speedMin + 0.1))} />
       <Slider label="Mutation ±%" min={0} max={0.3} step={0.01} value={p.mutationPct} setValue={p.setMutationPct} format={(v) => (v * 100).toFixed(0) + "%"} />
@@ -44,7 +48,7 @@ export default function ControlsPanel({ p }) {
         <div className="label"><span>Random Seed</span></div>
         <input type="number" value={p.seed} onChange={(e) => p.setSeed(parseInt(e.target.value || "0", 10))}
                style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--panel)", color: "var(--text)" }} />
-        <div className="label"><span>Tip:</span><span>Most sliders apply live, mid-run. Only population/generation settings (Prey per Species, Starting Carnivores, Initial Food, Obstacles, Seed) need a <b>Reset</b> to take effect.</span></div>
+        <div className="label"><span>Tip:</span><span>Most sliders apply live, mid-run. Only world-generation settings (Prey per Species, Starting Carnivores, Initial Food, Obstacles, Vision baseline, Seed) need a <b>Reset</b> to take effect — vision is now a per-animal inherited trait, so the baseline only seeds new founders.</span></div>
       </div>
     </div>
   );

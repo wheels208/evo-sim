@@ -20,7 +20,7 @@ export function useSimulationLoop({ tickRateRef, onTick, onSample, sampleEvery =
       onTick(delta);
       tickCountRef.current += 1;
       setTickCount(tickCountRef.current);
-      if (tickCountRef.current % sampleEvery === 0) onSample();
+      if (tickCountRef.current % sampleEvery === 0) onSample(tickCountRef.current);
     }, intervalMs);
   };
 

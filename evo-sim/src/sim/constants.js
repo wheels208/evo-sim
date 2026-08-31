@@ -12,19 +12,29 @@ export const CHART_HISTORY = 400; // points kept
 // traceable across generations (mutation nudges hue but clampHueToBands
 // keeps it inside its home band). Bands are spaced to avoid the red
 // bands reserved for predators.
+// Bands are spread to stay mutually distinguishable, clear of food's
+// fixed neon-green hue (~111deg, #39FF14), and clear of the red bands
+// reserved for predators.
 export const BAND = {
   preyYellow: [45, 65],
-  // Kept clear of food's fixed neon-green hue (~110deg, #39FF14) so
-  // green-lineage prey don't read as food dots at a glance.
-  preyGreen: [155, 178],
-  preyBlue: [200, 240],
-  preyPurple: [265, 290],
-  preyPink: [310, 335],
+  preyGreen: [135, 155],
+  preyTeal: [180, 200],
+  preyBlue: [220, 245],
+  preyPurple: [275, 300],
   predRedA: [350, 360],
   predRedB: [0, 10],
 };
 
-export const PREY_BANDS = ["preyYellow", "preyGreen", "preyBlue", "preyPurple", "preyPink"];
+export const PREY_BANDS = ["preyYellow", "preyGreen", "preyTeal", "preyBlue", "preyPurple"];
+
+// Human-readable lineage names for the inspector popup.
+export const BAND_LABELS = {
+  preyYellow: "Yellow",
+  preyGreen: "Green",
+  preyTeal: "Teal",
+  preyBlue: "Blue",
+  preyPurple: "Purple",
+};
 
 // Baseline spawn energy for predators — used both when creating one and
 // as the 100% reference point for the hunger-trigger threshold below.
@@ -43,12 +53,21 @@ export const DEFAULTS = {
   baseTickDrain: 1.0,
   moveCost: 0.2,
   energyPerFood: 60,
-  visionRadius: 10,
+  visionRadius: 10, // baseline for newly-founded entities; each one then mutates its own
+  visionMin: 1,
+  visionMax: 25,
   maxCreatures: 5000,
   speedMin: 0.5,
   speedMax: 3.0,
   mutationPct: 0.05,
   hungerGlobal: 1.0,
+
+  // Prey camouflage: a heritable 0..N level where each level cuts the
+  // radius at which predators can detect THIS prey by 25%. Affects
+  // detection range only — never the prey's own speed, vision, or drain.
+  preyCamoMaxLevel: 4,
+  preyCamoStepPct: 0.25,
+  preyCamoMutateChance: 0.15, // chance a child's level shifts +/-1 from the parent's
 
   // Carnivores
   startCarnivores: 8,

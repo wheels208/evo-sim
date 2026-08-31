@@ -30,6 +30,7 @@ export function getThemePalette() {
     preyStroke: isDark ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.65)",
     predStroke: isDark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.45)",
     camoStroke: "#ffffff",
+    selection: isDark ? "#38bdf8" : "#0284c7",
     text: getCssVar("--text") || (isDark ? "#e8edf3" : "#0a0a0a"),
     chartAxis: isDark ? "rgba(255,255,255,.35)" : "rgba(0,0,0,.35)",
     chartGrid: isDark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.08)",
